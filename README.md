@@ -52,6 +52,12 @@ sdet-automation-challenge/
 │   └── tests.yml                 # Pipeline CI/CD en GitHub Actions
 │
 ├── cypress/
+│   ├── assertions/                       # Capa dedicada de aserciones (Elimina anti-patrón de POM)
+│   │   └── buggy-cars/
+│   │       ├── AuthAsserts.ts            # Aserciones de autenticación y sesión
+│   │       ├── RegistrationAsserts.ts    # Aserciones de registro y alertas
+│   │       └── ModelAsserts.ts           # Aserciones de votación, contadores y comentarios
+│   │
 │   ├── e2e/
 │   │   ├── api/
 │   │   │   └── pets/
@@ -70,12 +76,12 @@ sdet-automation-challenge/
 │   │   ├── PetFactory.ts                 # IDs únicos por timestamp para entorno compartido
 │   │   └── UserFactory.ts                # Usuarios conformes a complejidad de contraseñas
 │   │
-│   ├── pages/                            # Page Object Model + Fluent Interfaces
+│   ├── pages/                            # Page Object Model (Puro: solo acciones y navegación)
 │   │   └── buggy-cars/
-│   │       ├── BasePage.ts               # Elementos comunes, navegación, login y asserts de sesión
+│   │       ├── BasePage.ts               # Elementos comunes, navegación y login/logout
 │   │       ├── HomePage.ts               # Acceso a modelos y secciones
-│   │       ├── RegistrationPage.ts       # Formulario y validación de alertas
-│   │       └── ModelPage.ts              # Votación, contador numérico y tabla de comentarios
+│   │       ├── RegistrationPage.ts       # Formulario y envío de datos
+│   │       └── ModelPage.ts              # Selección de auto, ingreso de comentarios y voto
 │   │
 │   ├── schemas/                          # Validación de contratos y schemas
 │   │   └── pet/
@@ -97,17 +103,35 @@ sdet-automation-challenge/
 └── tsconfig.json                         # Compilación estricta y path aliases
 ```
 
-### ¿Por qué Page Object Model combinado con Fluent Interfaces?
+### Separación de Responsabilidades: Page Objects vs Page Assertions (Eliminación de Anti-Patrón)
 
-1. **Abstracción del DOM:** Los tests describen la intención del negocio (`homePage.login().expectLoggedIn()`) en lugar de selectores y detalles técnicos de implementación.
+Para mantener una arquitectura escalable, desacoplada y de grado producción, se eliminó el anti-patrón de embeber aserciones (`expect()`, `should()`) dentro de las clases de Page Objects:
+
+1. **Responsabilidad Única (SRP):**
+   - **Page Objects (`cypress/pages/`):** Tienen como única responsabilidad modelar los componentes visuales, interactuar con el DOM (escribir, hacer clic, navegar) y exponer el estado. No juzgan el resultado del test.
+   - **Page Assertions (`cypress/assertions/`):** Tienen la responsabilidad exclusiva de validar estados esperados, textos, visibilidad e incrementos numéricos.
+2. **Mayor Flexibilidad y Reutilización:** Permite reutilizar las mismas acciones de una página en diferentes contextos (flujos exitosos, negativos o exploratorios) sin que una aserción interna rígida bloquee el test.
+3. **Legibilidad Expresiva:** Los tests mantienen una lectura clara y fluida, separando las acciones de las verificaciones:
+   ```typescript
+   // Acción en Page Object
+   registrationPage.fillForm(newUser).submit();
+
+   // Validación en Capa de Aserción
+   registrationAsserts.assertRegistrationSuccess();
+   ```
+
+### ¿Por qué Page Object Model combinado con Fluent Interfaces y Capa de Aserciones?
+
+1. **Abstracción del DOM:** Los tests describen la intención del negocio (`homePage.login()`, `authAsserts.assertLoggedIn()`) en lugar de interactuar directamente con selectores y detalles técnicos de implementación.
 2. **Alta legibilidad y fluidez:** El encadenamiento de métodos mediante `this` permite una sintaxis declarativa y fluida que se lee como un caso de prueba en lenguaje natural:
    ```typescript
    registrationPage
      .fillForm(newUser)
-     .submit()
-     .expectSuccessMessage();
+     .submit();
+
+   registrationAsserts.assertRegistrationSuccess();
    ```
-3. **Mantenibilidad:** Si un selector o flujo de la interfaz cambia, solo se modifica el Page Object correspondiente sin alterar los tests.
+3. **Mantenibilidad y Escalabilidad:** Si un selector o flujo de la interfaz cambia, solo se modifica el Page Object o la clase de Aserción correspondiente sin alterar la lógica de los tests.
 
 ---
 
