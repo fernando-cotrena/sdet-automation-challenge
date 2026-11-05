@@ -6,94 +6,97 @@ Este documento consolida los defectos y anomalías funcionales identificadas en 
 
 ### Resumen de Defectos Reportados
 
-| ID | Título | Severidad | Prioridad | Estado |
+| ID | Título | Severidad | Prioridad | Pantalla / Componente |
 |---|---|---|---|---|
-| **BUG-001** | La sección de comentarios en el detalle de modelo permite inyección de HTML/Scripts no sanitizados (Stored XSS) | **High** | High | Abierto |
-| **BUG-002** | El campo "Age" en la edición de perfil acepta valores negativos, decimales y caracteres especiales | **Medium** | Medium | Abierto |
-| **BUG-003** | Falta de control de idempotencia al votar un modelo permite duplicación de votos bajo condiciones de carrera | **High** | High | Abierto |
-| **BUG-004** | La tabla de "Overall Rating" no persiste el ordenamiento seleccionado al cambiar de página en la paginación | **Low** | Low | Abierto |
+| **BUG-001** | Desbordamiento en la paginación de la tabla Overall Rating permite avanzar más allá del total de páginas | **Medium** | High | `/overall` |
+| **BUG-002** | Enlace roto / URL mal formada en el icono social de Twitter en el pie de página | **Low** | Low | `/overall` (Footer) |
+| **BUG-003** | Parpadeo (*flickering*) de los campos de login en el header durante la recarga de página con sesión activa | **Medium** | Medium | Header / Global |
+| **BUG-004** | Falta de validación de tipos de datos en la edición de perfil de usuario (edad y género) | **High** | High | `/profile` |
 
 ---
 
 ## Detalle de Hallazgos
 
-### BUG-001: Inyección de HTML / Scripts no sanitizados en comentarios de votación
+### BUG-001: Desbordamiento en la paginación de la tabla Overall Rating
 
-- **Severidad:** High (Seguridad / Integridad de datos)
-- **Componente:** `Model Page -> Comment Section (/model/:id)`
-- **Precondiciones:** Usuario registrado con sesión activa.
+- **Severidad:** Medium (Usabilidad / Lógica de paginación)
+- **Prioridad:** High
+- **Componente:** `Overall Rating (/overall)`
+- **Precondiciones:** Ninguna (accesible públicamente).
 
 **Pasos para reproducir:**
-1. Iniciar sesión en el portal.
-2. Navegar a un modelo de auto (por ejemplo, desde el bloque "Popular Model" o el catálogo).
-3. En el campo de texto `Your Comment` ingresar un payload HTML o de script, por ejemplo:
-   ```html
-   <b>Test Bold Comment</b><script>console.log("XSS");</script>
-   ```
-4. Presionar el botón `Vote!`.
-5. Inspeccionar la tabla inferior de comentarios y recargar la página.
+1. Navegar a la pantalla de calificación general haciendo clic en `Overall Rating` desde la página principal (`https://buggy.justtestit.org/overall`).
+2. Desplazarse al control de paginación ubicado en la parte inferior de la tabla de autos.
+3. Observar el indicador de página actual (por ejemplo: `« page 1 of 5 »`).
+4. Hacer clic repetidamente en el botón de avance de página (`»`).
 
 **Resultado Esperado:**
-El texto del comentario debe ser escapado o sanitizado antes de persistirse en base de datos y renderizarse en el DOM (mostrando el payload como texto plano legible).
+El botón de avance (`»`) debe quedar deshabilitado (`disabled`) al alcanzar la última página disponible (`page 5 of 5`), impidiendo avanzar a páginas inexistentes.
 
 **Resultado Obtenido:**
-El navegador interpreta y renderiza etiquetas HTML directamente en el cuerpo de la tabla, exponiendo la aplicación a ataques de tipo Cross-Site Scripting (XSS almacenado).
+El control permite continuar avanzando indefinidamente (por ejemplo: `page 14 of 5`), mostrando la tabla vacía sin registros y rompiendo la coherencia del estado de paginación.
 
 ---
 
-### BUG-002: El campo "Age" en perfil de usuario acepta valores negativos y no enteros
+### BUG-002: Enlace roto / URL mal formada en el icono de Twitter del pie de página
 
-- **Severidad:** Medium (Validación de datos)
-- **Componente:** `User Profile (/profile)`
+- **Severidad:** Low (Navegación / UI)
+- **Prioridad:** Low
+- **Componente:** `Footer (Global / /overall)`
+- **Precondiciones:** Ninguna.
+
+**Pasos para reproducir:**
+1. Acceder a la pantalla `Overall Rating` (`/overall`).
+2. Dirigirse al pie de página donde se visualiza el texto `© 2016 Buggy Software, Inc.` y los accesos a redes sociales.
+3. Hacer clic o inspeccionar el enlace asociado al icono de Twitter / X.
+
+**Resultado Esperado:**
+El icono debe contener un enlace válido con protocolo completo (ej. `https://twitter.com/buggycars`) o abrir en una nueva pestaña el perfil oficial correspondiente.
+
+**Resultado Obtenido:**
+La URL asociada está rota o mal escrita (enlace relativo incorrecto o recurso inexistente), generando un error de navegación (404 Not Found) al intentar acceder.
+
+---
+
+### BUG-003: Parpadeo (*flickering*) de los campos de login en el header durante la recarga con sesión iniciada
+
+- **Severidad:** Medium (Experiencia de Usuario / Gestión de Estado)
+- **Prioridad:** Medium
+- **Componente:** `Header Navbar (Global)`
+- **Precondiciones:** Usuario autenticado con sesión activa (`Hi, {firstName}`).
+
+**Pasos para reproducir:**
+1. Iniciar sesión exitosamente en la aplicación con cualquier usuario válido.
+2. Constatar que el header muestra el saludo del usuario (`Hi, {firstName}`) y el enlace de `Logout`.
+3. Recargar la página (F5 o Ctrl+R) o navegar entre diferentes secciones de la aplicación.
+4. Observar atentamente la esquina superior derecha del header durante los primeros 1 a 3 segundos de carga.
+
+**Resultado Esperado:**
+El estado de autenticación (guardado en almacenamiento local o cookies de sesión) debe resolverse antes del primer render visual, o bien mostrar un *placeholder/skeleton* neutro para evitar parpadeos de interfaz.
+
+**Resultado Obtenido:**
+Durante los primeros segundos tras recargar, la aplicación renderiza transitoriamente los campos de texto `Login`, `Password` y el botón `Login`, antes de reemplazarlos abruptamente por el saludo del usuario autenticado, provocando *flickering* visual y confusión sobre el estado real de la sesión.
+
+---
+
+### BUG-004: Falta de validación de tipos de datos en la edición de perfil (`/profile`)
+
+- **Severidad:** High (Integridad de datos / Validación)
+- **Prioridad:** High
+- **Componente:** `Profile Page (/profile)`
 - **Precondiciones:** Usuario con sesión iniciada.
 
 **Pasos para reproducir:**
-1. Iniciar sesión en Buggy Cars Rating.
-2. Hacer clic en `Profile` en la barra de navegación superior.
-3. En el campo `Age`, ingresar un valor no numérico o fuera del dominio lógico: `-25` o `999999` o `abc`.
-4. Completar los campos obligatorios requeridos y hacer clic en `Save`.
+1. Iniciar sesión y hacer clic en `Profile` en la barra de navegación.
+2. Localizar el formulario con los datos personales del usuario.
+3. En el campo `Age` (Edad), ingresar caracteres alfabéticos o símbolos (por ejemplo: `veinticinco` o `abc`).
+4. En el campo `Gender` (Género), el cual debería ser un selector controlado (radio/dropdown) con valores tipados, ingresar texto arbitrario sin formato.
+5. Hacer clic en el botón `Save`.
 
 **Resultado Esperado:**
-La aplicación debe bloquear la entrada mediante validación HTML5 (`type="number"` con atributos `min="1"` y `max="120"` o regex de enteros positivos) y la API debe retornar un error `400 Bad Request` ante entradas inválidas.
+- El campo `Age` debe restringir la entrada exclusivamente a números enteros positivos mediante validación HTML5 (`type="number"`, `min="18"`) y validación en API (`400 Bad Request`).
+- El campo `Gender` debe ser un tipo enumerado cerrado (`Male`, `Female`, `Other`) o validar estrictamente el valor recibido.
+- La aplicación debe mostrar un mensaje de error descriptivo indicando qué campos contienen valores no válidos.
 
 **Resultado Obtenido:**
-El campo permite guardar valores negativos (ej. `-25`), persistiendo datos incoherentes en el perfil del usuario sin advertencia visual ni rechazo por parte del servidor.
-
----
-
-### BUG-003: Falta de idempotencia / control de concurrencia al enviar votos
-
-- **Severidad:** High (Regla de negocio)
-- **Componente:** `Model Page -> Voting API / UI (/model/:id)`
-- **Precondiciones:** Usuario autenticado que aún no ha votado por el modelo seleccionado.
-
-**Pasos para reproducir:**
-1. Navegar a un modelo de auto en el que el usuario no haya emitido voto previamente.
-2. Ingresar un comentario de prueba.
-3. Deshabilitar temporalmente la latencia de red (o enviar dos peticiones concurrentes rápidas mediante doble clic inmediato o request simultáneo).
-4. Observar el contador global de votos del auto.
-
-**Resultado Esperado:**
-La regla de negocio estipula que cada usuario puede emitir un único voto por auto. El botón `Vote!` debe deshabilitarse inmediatamente en el primer clic, y el backend debe responder con `409 Conflict` o rechazar cualquier voto subsiguiente del mismo usuario para ese modelo.
-
-**Resultado Obtenido:**
-En condiciones de doble clic rápido o concurrencia, el contador de votos se incrementa en más de 1 unidad y se registran múltiples entradas en la tabla de comentarios para el mismo usuario.
-
----
-
-### BUG-004: La tabla "Overall Rating" pierde el ordenamiento de columnas al paginar
-
-- **Severidad:** Low (Usabilidad / UI)
-- **Componente:** `Overall Rating Table (/overall)`
-- **Precondiciones:** Ninguna (accesible de forma pública).
-
-**Pasos para reproducir:**
-1. Hacer clic en la tarjeta `Overall Rating` desde la página de inicio.
-2. En la tabla de resultados, hacer clic en la columna `Rank` o `Votes` para ordenar de forma ascendente o descendente.
-3. Navegar a la página 2 utilizando los controles de paginación inferiores (`»` o número `2`).
-
-**Resultado Esperado:**
-El criterio de ordenamiento seleccionado por el usuario debe persistirse al cambiar de página (`state preservation` o query param `?sort=votes&dir=desc&page=2`).
-
-**Resultado Obtenido:**
-Al cambiar de página, la tabla reinicia el criterio de ordenamiento al estado por defecto, obligando al usuario a volver a ordenar los datos en cada página navegada.
+El formulario permite guardar letras en el campo de edad y texto libre en el campo de género, persistiendo datos inconsistentes en la base de datos sin ningún tipo de advertencia ni validación por parte del servidor.
