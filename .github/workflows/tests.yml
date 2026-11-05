@@ -1,0 +1,134 @@
+name: Automated Tests Suite
+
+on:
+  push:
+    branches: [main, feat/*]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Code Quality & Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Check code formatting
+        run: npm run format:check
+
+  test-api:
+    name: API Automation (Swagger Petstore)
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run API Tests
+        run: npm run test:api
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-test-results
+          path: reports/mocha
+          retention-days: 7
+
+  test-ui:
+    name: UI Automation (Buggy Cars Rating)
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run UI Tests
+        run: npm run test:ui
+
+      - name: Upload Screenshots on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-failure-screenshots
+          path: cypress/screenshots
+          retention-days: 7
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: reports/mocha
+          retention-days: 7
+
+  generate-report:
+    name: Merge & Publish Test Report
+    runs-on: ubuntu-latest
+    needs: [test-api, test-ui]
+    if: always()
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Download API Test Results
+        uses: actions/download-artifact@v4
+        with:
+          name: api-test-results
+          path: reports/mocha
+
+      - name: Download UI Test Results
+        uses: actions/download-artifact@v4
+        with:
+          name: ui-test-results
+          path: reports/mocha
+
+      - name: Generate Consolidated HTML Report
+        run: npm run report
+
+      - name: Publish Consolidated HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-html-report
+          path: reports/html
+          retention-days: 14
