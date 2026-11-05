@@ -147,3 +147,12 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+
+# Test artifacts & reports
+reports/
+screenshots/
+videos/
+
+# Local challenge notes & plan
+/docs/
