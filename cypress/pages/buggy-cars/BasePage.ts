@@ -1,5 +1,5 @@
 export abstract class BasePage {
-  // Common Navbar Selectors
+  // Common Navbar Locators
   protected readonly brandLogo = 'a.navbar-brand';
   protected readonly loginInput = 'input[name="login"]';
   protected readonly passwordInput = 'input[name="password"]';
@@ -42,38 +42,6 @@ export abstract class BasePage {
    */
   public logout(): this {
     cy.contains(this.logoutLink, 'Logout').should('be.visible').click();
-    return this;
-  }
-
-  /**
-   * Asserts the user is logged in by validating the header greeting
-   */
-  public expectLoggedIn(name?: string): this {
-    if (name) {
-      cy.contains(this.userGreeting, `Hi, ${name}`).should('be.visible');
-    } else {
-      cy.contains(this.userGreeting, 'Hi,').should('be.visible');
-    }
-    cy.contains(this.logoutLink, 'Logout').should('be.visible');
-    return this;
-  }
-
-  /**
-   * Asserts the session is logged out
-   */
-  public expectLoggedOut(): this {
-    cy.get(this.loginInput).should('be.visible');
-    cy.get(this.passwordInput).should('be.visible');
-    cy.get(this.loginButton).should('be.visible');
-    cy.contains(this.logoutLink, 'Logout').should('not.exist');
-    return this;
-  }
-
-  /**
-   * Asserts login error message in header
-   */
-  public expectLoginError(message = 'Invalid username/password'): this {
-    cy.get(this.loginErrorMessage).should('be.visible').and('contain.text', message);
     return this;
   }
 }

@@ -15,7 +15,8 @@
       "@services/*": ["cypress/services/*"],
       "@schemas/*": ["cypress/schemas/*"],
       "@factories/*": ["cypress/factories/*"],
-      "@pages/*": ["cypress/pages/*"]
+      "@pages/*": ["cypress/pages/*"],
+      "@assertions/*": ["cypress/assertions/*"]
     },
     "types": ["cypress", "node"]
   },

@@ -4,8 +4,6 @@ export class ModelPage extends BasePage {
   private readonly votesHeader = 'h4';
   private readonly commentTextarea = '#comment';
   private readonly voteButton = 'button.btn-success';
-  private readonly voteSuccessAlert = 'p.card-text';
-  private readonly commentsTable = 'table.table tbody';
 
   public visit(modelPath = '/model/c04b8801-460d-4050-a929-e3ab47a9501d'): this {
     super.visit(modelPath);
@@ -37,33 +35,6 @@ export class ModelPage extends BasePage {
    */
   public clickVote(): this {
     cy.contains(this.voteButton, 'Vote!').should('be.enabled').click();
-    return this;
-  }
-
-  /**
-   * Asserts the success message displayed after voting
-   */
-  public expectVoteSuccess(): this {
-    cy.contains(this.voteSuccessAlert, 'Thank you for your vote!').should('be.visible');
-    return this;
-  }
-
-  /**
-   * Asserts that the vote count has increased by 1 from previous count
-   */
-  public expectVotesIncremented(initialCount: number): this {
-    this.getVotesCount().should('eq', initialCount + 1);
-    return this;
-  }
-
-  /**
-   * Asserts that the comment appears in the comments table
-   */
-  public expectCommentListed(comment: string, author?: string): this {
-    cy.get(this.commentsTable).should('be.visible').and('contain.text', comment);
-    if (author) {
-      cy.get(this.commentsTable).should('contain.text', author);
-    }
     return this;
   }
 }
