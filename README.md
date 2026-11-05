@@ -137,7 +137,7 @@ Si contáramos con un ciclo de desarrollo extendido para Buggy Cars Rating, la e
 
 ### 1. Nivel API / Contrato (Mayor retorno de inversión)
 - **Autenticación y Sesiones:** Pruebas directas contra los endpoints de autenticación (`/oauth/token` o endpoints REST de login) para verificar caducidad de tokens JWT, refresh tokens e invalidación en logout.
-- **Concurrencia e Idempotencia:** Ejecución de pruebas de carrera (race conditions) sobre el endpoint de votos para certificar que un usuario no pueda registrar votos duplicados concurrentemente (ver hallazgo [BUG-003 en BUGS.md](./BUGS.md)).
+- **Concurrencia e Idempotencia:** Ejecución de pruebas de carrera (race conditions) sobre el endpoint de votos para certificar que un usuario no pueda registrar votos duplicados concurrentemente (ver hallazgos en [BUGS.md](./BUGS.md)).
 - **Validación de Límites y Schemas:** Pruebas negativas en API enviando valores de borde en campos de perfil (edad negativa, cadenas extremadamente largas, caracteres especiales).
 
 ### 2. Nivel Web UI (E2E)
@@ -158,8 +158,7 @@ Si contáramos con un ciclo de desarrollo extendido para Buggy Cars Rating, la e
 
 1. **Visual Testing Integrado:** Agregar pruebas de regresión visual automatizadas con Percy o Cypress Image Snapshot para detectar roturas accidentales de maquetación en Buggy Cars.
 2. **Mocks y Stubs con `cy.intercept`:** Implementar tests adicionales con interceptores para simular respuestas lentas, caídas del servidor (`500 Internal Server Error`) o microservicios no disponibles.
-3. **Colección Postman / Newman:** Generar la colección ejecutable de Swagger Petstore para correrla también vía CLI con Newman o integrarla en pre-commit hooks.
-4. **Matriz de múltiples navegadores en CI:** Configurar el pipeline para correr en paralelo tanto en Electron como en Chrome y Firefox.
+3. **Matriz de múltiples navegadores en CI:** Configurar el pipeline para correr en paralelo tanto en Electron como en Chrome y Firefox.
 
 ---
 
