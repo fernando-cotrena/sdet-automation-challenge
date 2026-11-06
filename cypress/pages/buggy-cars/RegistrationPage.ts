@@ -18,13 +18,13 @@ export class RegistrationPage extends BasePage {
    * Fills the registration form with user data
    */
   public fillForm(user: UserData): this {
-    const form = cy.get('form').filter(':has(#firstName)');
+    const form = cy.get('my-register input[formcontrolname]')
 
-    form.find('#username').clear().type(user.username);
-    form.find('#firstName').clear().type(user.firstName);
-    form.find('#lastName').clear().type(user.lastName);
-    form.find('#password').clear().type(user.password);
-    form.find('#confirmPassword').clear().type(user.password);
+    form.get('#username').clear().type(user.username);
+    form.get('#firstName').clear().type(user.firstName);
+    form.get('#lastName').clear().type(user.lastName);
+    form.get('#password').clear().type(user.password);
+    form.get('#confirmPassword').clear().type(user.password);
 
     return this;
   }
