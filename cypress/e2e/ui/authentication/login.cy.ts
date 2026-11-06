@@ -14,17 +14,12 @@ describe('UI - Authentication (Login)', () => {
     const user = UserFactory.buildValidUser();
 
     // Setup: Dynamically register user
-    registrationPage
-      .visit()
-      .fillForm(user)
-      .submit();
+    registrationPage.visit().fillForm(user).submit();
 
     registrationAsserts.assertRegistrationSuccess();
 
     // Action: Log in
-    homePage
-      .visit()
-      .login(user.username, user.password);
+    homePage.visit().login(user.username, user.password);
 
     // Assertion: Validate active session via AuthAsserts
     authAsserts.assertLoggedIn(user.firstName);
@@ -33,18 +28,14 @@ describe('UI - Authentication (Login)', () => {
   it('3. Login fallido: should display error message when submitting invalid credentials', () => {
     const invalidUser = UserFactory.buildInvalidUser();
 
-    homePage
-      .visit()
-      .login(invalidUser.username, invalidUser.password);
+    homePage.visit().login(invalidUser.username, invalidUser.password);
 
     authAsserts.assertLoginError('Invalid username/password');
   });
 
   it('3. Login fallido: should handle empty username and password fields gracefully', () => {
-    homePage
-      .visit()
-      .login('', '');
+    homePage.visit().login('', '');
 
-    authAsserts.assertLoginRequired()
+    authAsserts.assertLoginRequired();
   });
 });

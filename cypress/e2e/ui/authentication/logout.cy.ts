@@ -14,17 +14,12 @@ describe('UI - Authentication (Logout)', () => {
     const user = UserFactory.buildValidUser();
 
     // 1. Setup dynamic user
-    registrationPage
-      .visit()
-      .fillForm(user)
-      .submit();
+    registrationPage.visit().fillForm(user).submit();
 
     registrationAsserts.assertRegistrationSuccess();
 
     // 2. Log in
-    homePage
-      .visit()
-      .login(user.username, user.password);
+    homePage.visit().login(user.username, user.password);
 
     authAsserts.assertLoggedIn(user.firstName);
 
