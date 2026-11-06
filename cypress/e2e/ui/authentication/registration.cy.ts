@@ -17,9 +17,7 @@ describe('UI - User Registration', () => {
     registrationPage.visit();
 
     // 2. Fill form with dynamically generated user data and submit
-    registrationPage
-      .fillForm(newUser)
-      .submit();
+    registrationPage.fillForm(newUser).submit();
 
     // Assert registration success via dedicated assertion layer
     registrationAsserts.assertRegistrationSuccess('Registration is successful');

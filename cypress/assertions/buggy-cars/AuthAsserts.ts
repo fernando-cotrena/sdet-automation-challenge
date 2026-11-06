@@ -35,10 +35,10 @@ export class AuthAsserts {
   }
 
   public assertLoginRequired(): this {
-  cy.get(this.loginInput)
-    .should('have.prop', 'required', true)
-    .and('have.prop', 'validity.valid', false);
+    cy.get(this.loginInput)
+      .should('have.prop', 'required', true)
+      .and('have.prop', 'validity.valid', false);
 
-  return this;
-}
+    return this;
+  }
 }

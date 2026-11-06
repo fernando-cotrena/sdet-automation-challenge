@@ -20,16 +20,11 @@ describe('UI - Business Flow (Model Voting & Comments)', () => {
     const commentText = `Automation review: ${faker.lorem.sentence()} [${Date.now()}]`;
 
     // 1. Setup isolated user and log in
-    registrationPage
-      .visit()
-      .fillForm(user)
-      .submit();
+    registrationPage.visit().fillForm(user).submit();
 
     registrationAsserts.assertRegistrationSuccess();
 
-    homePage
-      .visit()
-      .login(user.username, user.password);
+    homePage.visit().login(user.username, user.password);
 
     authAsserts.assertLoggedIn(user.firstName);
 
@@ -38,9 +33,7 @@ describe('UI - Business Flow (Model Voting & Comments)', () => {
 
     // 3. Capture initial vote count and cast vote with comment
     modelPage.getVotesCount().then((initialVotes) => {
-      modelPage
-        .enterComment(commentText)
-        .clickVote();
+      modelPage.enterComment(commentText).clickVote();
 
       // Assertions delegated to ModelAsserts layer
       modelAsserts
