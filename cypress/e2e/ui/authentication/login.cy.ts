@@ -45,6 +45,6 @@ describe('UI - Authentication (Login)', () => {
       .visit()
       .login('', '');
 
-    authAsserts.assertLoginError('Invalid username/password');
+    authAsserts.assertLoginRequired()
   });
 });

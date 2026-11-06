@@ -1,122 +1,125 @@
-name: Daily Automated Tests
+
+name: Automated Tests Suite
 
 on:
-  schedule:
-    - cron: '0 12 * * *' # Every day at 9:00 AM Argentina time (UTC-3)
-
-  workflow_dispatch: # Allow manual execution
+  push:
+    branches: [main, feat/*]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 12 * * 1-5' # Lunes a viernes, 9 AM Argentina
 
 jobs:
-  api-tests:
-    name: API Tests
+  lint:
+    name: Code Quality & Linting
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
 
-      - name: Run API tests
-        run: npm run test:api
+  test-api:
+    name: API Automation (Swagger Petstore)
+    runs-on: ubuntu-latest
+    needs: [lint]
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Upload API results
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+      - run: npm run test:api
+
+      - name: Upload API Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: api-test-results
-          path: reports/mocha
-          if-no-files-found: ignore
-          retention-days: 14
+          path: reports/mocha/
+          if-no-files-found: warn
+          retention-days: 7
 
-  ui-tests:
-    name: UI Tests
+  test-ui:
+    name: UI Automation (Buggy Cars Rating)
     runs-on: ubuntu-latest
-
+    needs: [lint]
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
+      - run: npm run test:ui
 
-      - name: Run UI tests
-        run: npm run test:ui
-
-      - name: Upload UI results
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-test-results
-          path: reports/mocha
-          if-no-files-found: ignore
-          retention-days: 14
-
-      - name: Upload screenshots on failure
+      - name: Upload Screenshots on Failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: ui-failure-screenshots
-          path: cypress/screenshots
+          path: cypress/screenshots/
           if-no-files-found: ignore
-          retention-days: 14
+          retention-days: 7
+
+      - name: Upload UI Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: reports/mocha/
+          if-no-files-found: warn
+          retention-days: 7
 
   generate-report:
-    name: Generate HTML Report
+    name: Merge & Publish Test Report
     runs-on: ubuntu-latest
-    needs: [api-tests, ui-tests]
+    needs: [test-api, test-ui]
     if: always()
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci
+      - run: npm ci
 
-      - name: Download API results
-        if: always()
-        continue-on-error: true
+      - name: Download API Test Results
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: api-test-results
           path: reports/mocha/api
 
-      - name: Download UI results
-        if: always()
-        continue-on-error: true
+      - name: Download UI Test Results
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: ui-test-results
           path: reports/mocha/ui
 
-      - name: Generate consolidated report
+      - name: Generate Consolidated HTML Report
         run: npm run report
 
-      - name: Upload HTML report
+      - name: Publish Consolidated HTML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: daily-automated-test-report
-          path: reports/html
+          name: mochawesome-html-report
+          path: reports/html/
           if-no-files-found: warn
           retention-days: 14
