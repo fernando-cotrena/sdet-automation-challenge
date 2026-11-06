@@ -34,7 +34,8 @@ module.exports = [
         ...globals.node,
         ...globals.mocha,
         cy: 'readonly',
-        Cypress: 'readonly'
+        Cypress: 'readonly',
+        expect: 'readonly'
       }
     }
   },
@@ -52,12 +53,16 @@ module.exports = [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
+
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_' }
-      ]
+        {
+          argsIgnorePattern: '^_'
+        }
+      ],
+      '@typescript-eslint/no-namespace': 'off'
     }
   }
 ];
