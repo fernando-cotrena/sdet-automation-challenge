@@ -1,4 +1,6 @@
 
+const js = require('@eslint/js');
+const globals = require('globals');
 const tsParser = require('@typescript-eslint/parser');
 const tsPlugin = require('@typescript-eslint/eslint-plugin');
 
@@ -18,15 +20,22 @@ module.exports = [
       ecmaVersion: 2022,
       sourceType: 'module',
       globals: {
-        require: 'readonly',
-        module: 'readonly',
-        process: 'readonly',
-        __dirname: 'readonly',
-        console: 'readonly'
+        ...globals.node
       }
     },
     rules: {
-      ...require('@eslint/js').configs.recommended.rules
+      ...js.configs.recommended.rules
+    }
+  },
+  {
+    files: ['cypress/**/*.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+        ...globals.mocha,
+        cy: 'readonly',
+        Cypress: 'readonly'
+      }
     }
   },
   {
@@ -43,7 +52,6 @@ module.exports = [
     },
     rules: {
       ...tsPlugin.configs.recommended.rules,
-
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-unused-vars': [
