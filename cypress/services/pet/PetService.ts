@@ -1,4 +1,4 @@
-import { Pet } from '../schemas/pet/PetSchema';
+import { Pet } from '@schemas/pet/PetSchema';
 
 export class PetService {
   private readonly baseUrl: string;
