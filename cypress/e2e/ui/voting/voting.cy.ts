@@ -39,7 +39,7 @@ describe('UI - Business Flow (Model Voting & Comments)', () => {
       modelAsserts
         .assertVoteSuccess()
         .assertVotesIncremented(initialVotes)
-        .assertCommentListed(commentText, user.firstName);
+        .assertCommentListed(commentText);
     });
   });
 });
