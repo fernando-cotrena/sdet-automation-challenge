@@ -1,3 +1,4 @@
+
 name: Automated Tests Suite
 
 on:
@@ -5,54 +6,48 @@ on:
     branches: [main, feat/*]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 12 * * 1-5' # Lunes a viernes, 9 AM Argentina
 
 jobs:
   lint:
     name: Code Quality & Linting
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run ESLint
-        run: npm run lint
-
-      - name: Check code formatting
-        run: npm run format:check
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run format:check
 
   test-api:
     name: API Automation (Swagger Petstore)
     runs-on: ubuntu-latest
     needs: [lint]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm ci
+      - run: npm run test:api
 
-      - name: Run API Tests
-        run: npm run test:api
-
-      - name: Upload Test Results
+      - name: Upload API Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: api-test-results
-          path: reports/mocha
+          path: reports/mocha/
+          if-no-files-found: warn
           retention-days: 7
 
   test-ui:
@@ -60,34 +55,32 @@ jobs:
     runs-on: ubuntu-latest
     needs: [lint]
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run UI Tests
-        run: npm run test:ui
+      - run: npm ci
+      - run: npm run test:ui
 
       - name: Upload Screenshots on Failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: ui-failure-screenshots
-          path: cypress/screenshots
+          path: cypress/screenshots/
+          if-no-files-found: ignore
           retention-days: 7
 
-      - name: Upload Test Results
+      - name: Upload UI Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ui-test-results
-          path: reports/mocha
+          path: reports/mocha/
+          if-no-files-found: warn
           retention-days: 7
 
   generate-report:
@@ -96,37 +89,37 @@ jobs:
     needs: [test-api, test-ui]
     if: always()
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
 
-      - name: Install dependencies
-        run: npm install
+      - run: npm ci
 
       - name: Download API Test Results
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: api-test-results
-          path: reports/mocha
-          merge-multiple: true
+          path: reports/mocha/api
 
       - name: Download UI Test Results
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: ui-test-results
-          path: reports/mocha
-          merge-multiple: true
+          path: reports/mocha/ui
 
       - name: Generate Consolidated HTML Report
         run: npm run report
 
       - name: Publish Consolidated HTML Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mochawesome-html-report
-          path: reports/html
+          path: reports/html/
+          if-no-files-found: warn
           retention-days: 14
