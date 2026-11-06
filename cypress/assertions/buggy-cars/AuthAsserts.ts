@@ -10,11 +10,7 @@ export class AuthAsserts {
    * Asserts the user is successfully logged in with active session
    */
   public assertLoggedIn(name?: string): this {
-    if (name) {
-      cy.contains(this.userGreeting, `Hi, ${name}`).should('be.visible');
-    } else {
-      cy.contains(this.userGreeting, 'Hi,').should('be.visible');
-    }
+    cy.contains(this.userGreeting, `Hi, ${name}`).should('be.visible');
     cy.contains(this.logoutLink, 'Logout').should('be.visible');
     return this;
   }
@@ -37,4 +33,12 @@ export class AuthAsserts {
     cy.get(this.loginErrorMessage).should('be.visible').and('contain.text', message);
     return this;
   }
+
+  public assertLoginRequired(): this {
+  cy.get(this.loginInput)
+    .should('have.prop', 'required', true)
+    .and('have.prop', 'validity.valid', false);
+
+  return this;
+}
 }

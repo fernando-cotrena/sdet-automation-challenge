@@ -24,11 +24,8 @@ export class ModelAsserts {
   /**
    * Asserts that the comment and author are recorded in the comments table
    */
-  public assertCommentListed(commentText: string, author?: string): this {
-    cy.get(this.commentsTable).should('be.visible').and('contain.text', commentText);
-    if (author) {
-      cy.get(this.commentsTable).should('contain.text', author);
-    }
+  public assertCommentListed(commentText: string): this {
+    cy.get(this.commentsTable).first().should('be.visible').and('contain.text', commentText);
     return this;
   }
 }

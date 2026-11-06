@@ -1,28 +1,36 @@
+
 {
   "name": "sdet-automation-challenge",
   "version": "1.0.0",
   "description": "End-to-end API and Web UI test automation challenge using TypeScript, Cypress, and Zod",
   "main": "index.js",
   "scripts": {
-    "test": "cypress run",
-    "test:api": "cypress run --spec \"cypress/e2e/api/**/*.cy.ts\"",
+    "test": "npm run test:all",
     "test:ui": "cypress run --spec \"cypress/e2e/ui/**/*.cy.ts\"",
+    "test:api": "cypress run --spec \"cypress/e2e/api/**/*.cy.ts\"",
+    "test:all": "cypress run",
+    "test:ui:report": "npm run report:clean && npm run test:ui && npm run report:generate:ui",
+    "test:api:report": "npm run report:clean && npm run test:api && npm run report:generate:api",
+    "test:all:report": "npm run report:clean && npm run test:all && npm run report:generate:all",
     "cy:open": "cypress open",
-    "lint": "eslint . --ext .ts",
-    "lint:fix": "eslint . --ext .ts --fix",
+    "cy:verify": "cypress verify",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "format": "prettier --write \"cypress/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"cypress/**/*.{ts,js,json}\"",
     "report:clean": "rimraf reports",
     "report:merge": "mochawesome-merge reports/mocha/*.json > reports/mochawesome.json",
-    "report:generate": "marge reports/mochawesome.json -f report -o reports/html --charts true",
-    "report": "npm run report:merge && npm run report:generate"
+    "report:generate:ui": "marge reports/mochawesome.json -f ui-report -o reports/html --charts",
+    "report:generate:api": "marge reports/mochawesome.json -f api-report -o reports/html --charts",
+    "report:generate:all": "marge reports/mochawesome.json -f full-report -o reports/html --charts",
+    "report": "npm run report:merge && npm run report:generate:all"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.5.0",
     "@types/node": "^22.13.5",
     "@typescript-eslint/eslint-plugin": "^8.24.1",
     "@typescript-eslint/parser": "^8.24.1",
-    "cypress": "^14.1.0",
+    "cypress": "14.5.4",
     "cypress-mochawesome-reporter": "^3.8.2",
     "eslint": "^9.21.0",
     "mochawesome": "^7.1.3",
@@ -32,5 +40,8 @@
     "rimraf": "^6.0.1",
     "typescript": "^5.7.3",
     "zod": "^3.24.2"
+  },
+  "allowScripts": {
+    "cypress@14.5.4": true
   }
 }
