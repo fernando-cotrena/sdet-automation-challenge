@@ -5,17 +5,15 @@
   "main": "index.js",
   "scripts": {
     "test": "cypress run",
-    "test:api": "cypress run --spec \"cypress/e2e/api/**/*.cy.ts\"",
-    "test:ui": "cypress run --spec \"cypress/e2e/ui/**/*.cy.ts\"",
+    "test:api": "cypress run --spec \"cypress/e2e/api/**/*.cy.ts\" --reporter-options reportDir=reports/mocha/api",
+    "test:ui": "cypress run --spec \"cypress/e2e/ui/**/*.cy.ts\" --reporter-options reportDir=reports/mocha/ui",
     "cy:open": "cypress open",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix",
-    "format": "prettier --write \"cypress/**/*.{ts,js,json}\"",
-    "format:check": "prettier --check \"cypress/**/*.{ts,js,json}\"",
+    "format": "prettier --write \"cypress/**/*.{ts,js,json}\" \"scripts/**/*.{js,json}\"",
+    "format:check": "prettier --check \"cypress/**/*.{ts,js,json}\" \"scripts/**/*.{js,json}\"",
     "report:clean": "rimraf reports",
-    "report:merge": "mochawesome-merge reports/mocha/*.json > reports/mochawesome.json",
-    "report:generate": "marge reports/mochawesome.json -f report -o reports/html --charts true",
-    "report": "npm run report:merge && npm run report:generate"
+    "report": "node scripts/generate-report.js"
   },
   "devDependencies": {
     "@faker-js/faker": "^9.5.0",

@@ -1,26 +1,68 @@
 name: Automated Tests Suite
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
-    branches: [main, feat/*]
+    branches:
+      - main
+      - 'feat/**'
   pull_request:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: 'Test suite to execute'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - api
+          - ui
+      environment:
+        description: 'Target test environment'
+        required: false
+        default: 'QA'
+        type: string
+  schedule:
+    # Daily regression execution at 09:00 Argentina time (UTC-3) -> 12:00 UTC
+    - cron: '0 12 * * *'
 
 jobs:
   lint:
     name: Code Quality & Linting
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            package.json
+
+      - name: Ensure package-lock.json
+        run: |
+          if [ ! -f package-lock.json ]; then
+            echo "Generating package-lock.json for deterministic npm ci..."
+            npm install --package-lock-only
+          fi
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run ESLint
         run: npm run lint
@@ -31,48 +73,85 @@ jobs:
   test-api:
     name: API Automation (Swagger Petstore)
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [lint]
+    if: |
+      always() &&
+      !cancelled() &&
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.lint.result == 'success') &&
+      (github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'api')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            package.json
+
+      - name: Ensure package-lock.json
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only
+          fi
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run API Tests
         run: npm run test:api
+        env:
+          CYPRESS_ENV: ${{ inputs.environment || 'QA' }}
 
-      - name: Upload Test Results
+      - name: Upload API Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: api-test-results
-          path: reports/mocha
+          path: reports/mocha/api
+          if-no-files-found: ignore
           retention-days: 7
 
   test-ui:
     name: UI Automation (Buggy Cars Rating)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [lint]
+    if: |
+      always() &&
+      !cancelled() &&
+      (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || needs.lint.result == 'success') &&
+      (github.event_name != 'workflow_dispatch' || inputs.suite == 'all' || inputs.suite == 'ui')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            package.json
+
+      - name: Ensure package-lock.json
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only
+          fi
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Run UI Tests
         run: npm run test:ui
+        env:
+          CYPRESS_ENV: ${{ inputs.environment || 'QA' }}
 
       - name: Upload Screenshots on Failure
         if: failure()
@@ -80,53 +159,84 @@ jobs:
         with:
           name: ui-failure-screenshots
           path: cypress/screenshots
+          if-no-files-found: ignore
           retention-days: 7
 
-      - name: Upload Test Results
+      - name: Upload Videos on Failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-failure-videos
+          path: cypress/videos
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload UI Test Results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ui-test-results
-          path: reports/mocha
+          path: reports/mocha/ui
+          if-no-files-found: ignore
           retention-days: 7
 
   generate-report:
     name: Merge & Publish Test Report
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: [test-api, test-ui]
-    if: always()
+    if: |
+      always() &&
+      !cancelled() &&
+      (needs.test-api.result == 'success' || needs.test-api.result == 'failure' ||
+       needs.test-ui.result == 'success' || needs.test-ui.result == 'failure')
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            package.json
+
+      - name: Ensure package-lock.json
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only
+          fi
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
+
+      - name: Prepare report directories
+        run: mkdir -p reports/mocha/api reports/mocha/ui
 
       - name: Download API Test Results
+        if: needs.test-api.result == 'success' || needs.test-api.result == 'failure'
         uses: actions/download-artifact@v4
         with:
           name: api-test-results
-          path: reports/mocha
-          merge-multiple: true
+          path: reports/mocha/api
 
       - name: Download UI Test Results
+        if: needs.test-ui.result == 'success' || needs.test-ui.result == 'failure'
         uses: actions/download-artifact@v4
         with:
           name: ui-test-results
-          path: reports/mocha
-          merge-multiple: true
+          path: reports/mocha/ui
 
       - name: Generate Consolidated HTML Report
         run: npm run report
 
       - name: Publish Consolidated HTML Report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mochawesome-html-report
           path: reports/html
+          if-no-files-found: error
           retention-days: 14

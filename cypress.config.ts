@@ -2,9 +2,10 @@ import { defineConfig } from 'cypress';
 
 export default defineConfig({
   e2e: {
-    baseUrl: 'https://buggy.justtestit.org',
+    baseUrl: process.env.CYPRESS_BASE_URL || 'https://buggy.justtestit.org',
     env: {
-      apiBaseUrl: 'https://petstore.swagger.io/v2',
+      apiBaseUrl: process.env.CYPRESS_API_BASE_URL || 'https://petstore.swagger.io/v2',
+      environment: process.env.CYPRESS_ENV || 'QA',
       defaultPassword: 'Password123!'
     },
     specPattern: 'cypress/e2e/**/*.cy.ts',
@@ -12,7 +13,7 @@ export default defineConfig({
     fixturesFolder: 'cypress/fixtures',
     viewportWidth: 1280,
     viewportHeight: 720,
-    video: false,
+    video: process.env.CI ? true : false,
     screenshotOnRunFailure: true,
     defaultCommandTimeout: 10000,
     requestTimeout: 10000,

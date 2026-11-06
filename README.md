@@ -97,6 +97,8 @@ sdet-automation-challenge/
 │       └── index.d.ts                    # Declaraciones de tipos TypeScript
 │
 ├── reports/                              # Reportes consolidados HTML y JSON (Mochawesome)
+├── scripts/
+│   └── generate-report.js                # Consolidación robusta y multiplataforma de reportes
 ├── BUGS.md                               # Reporte detallado de defectos encontrados
 ├── cypress.config.ts                     # Configuración de entornos, baseUrl y timeouts
 ├── package.json                          # Scripts y dependencias
@@ -132,6 +134,88 @@ Para mantener una arquitectura escalable, desacoplada y de grado producción, se
    registrationAsserts.assertRegistrationSuccess();
    ```
 3. **Mantenibilidad y Escalabilidad:** Si un selector o flujo de la interfaz cambia, solo se modifica el Page Object o la clase de Aserción correspondiente sin alterar la lógica de los tests.
+
+---
+
+## 🔄 Pipeline CI/CD en GitHub Actions
+
+El proyecto implementa un pipeline profesional de Integración Continua ([`.github/workflows/tests.yml`](./.github/workflows/tests.yml)) diseñado para maximizar confiabilidad, velocidad y trazabilidad de ejecuciones.
+
+### 1. Disparadores del Pipeline (`Triggers`)
+
+- **`push`:** Se ejecuta automáticamente ante cada push a la rama `main` y a cualquier rama de características (`feat/**`).
+- **`pull_request`:** Se dispara en cada Pull Request con destino a `main`.
+- **`schedule` (Regresión Diaria):** Programada para ejecutarse automáticamente todos los días a las **09:00 hora de Argentina (UTC-3)** mediante la expresión cron `0 12 * * *` (12:00 UTC).
+- **`workflow_dispatch` (Ejecución Manual):** Permite disparar la suite de forma manual desde la interfaz de GitHub Actions con parámetros configurables.
+
+### 2. Ejecución Manual Parametrizada (`workflow_dispatch`)
+
+Para ejecutar la suite manualmente en GitHub:
+1. Ir a la pestaña **Actions** en el repositorio.
+2. Seleccionar el workflow **Automated Tests Suite** en el panel izquierdo.
+3. Hacer clic en el botón **Run workflow**.
+4. Configurar los parámetros:
+   - **`suite`** (Selección de Suite):
+     - `all`: Ejecuta tanto API como UI y consolida ambos resultados (predeterminado).
+     - `api`: Ejecuta únicamente la suite de Swagger Petstore.
+     - `ui`: Ejecuta únicamente la suite de Buggy Cars Rating.
+   - **`environment`** (Entorno de Destino):
+     - `QA`: Entorno por defecto (configurable para apuntar a otros entornos mediante variables).
+
+### 3. Estructura de Jobs del Pipeline
+
+```mermaid
+flowchart TD
+    A["Disparador: Push / PR / Schedule / Manual"] --> B["Job: Code Quality & Linting"]
+    B -->|Gatekeeper en Push / PR| C["Job: API Automation"]
+    B -->|Gatekeeper en Push / PR| D["Job: UI Automation"]
+    A -.->|Manual / Schedule| C
+    A -.->|Manual / Schedule| D
+    C --> E["Job: Merge & Publish Test Report"]
+    D --> E
+    E --> F["Publicación de Artefactos: HTML, Screenshots, Videos"]
+```
+
+- **`lint` (Code Quality & Linting):**
+  - Corre en `ubuntu-latest` con Node.js 22 y caché de dependencias npm.
+  - Asegura la existencia de `package-lock.json` para garantizar una instalación determinista con `npm ci`.
+  - Ejecuta análisis estático con ESLint (`npm run lint`) y chequeo de formato con Prettier (`npm run format:check`).
+  - Actúa como *gatekeeper* en flujos de `push` y `pull_request`.
+- **`test-api` (API Automation - Swagger Petstore):**
+  - Depende del resultado de `lint` en ejecuciones de `push` y `pull_request`.
+  - Se ejecuta en paralelo e independiente de la suite de UI.
+  - Genera resultados aislados en `reports/mocha/api/`.
+  - Sube los resultados como artefacto (`api-test-results`), incluso si algún test falla (`if: always()`).
+- **`test-ui` (UI Automation - Buggy Cars Rating):**
+  - Depende del resultado de `lint` en ejecuciones de `push` y `pull_request`.
+  - Se ejecuta en paralelo e independiente de la suite de API.
+  - Activa la grabación de video en CI (`video: true` bajo entorno CI).
+  - Genera resultados aislados en `reports/mocha/ui/`.
+  - En caso de fallo, captura y sube automáticamente screenshots (`cypress/screenshots`) y videos (`cypress/videos`).
+  - Sube los resultados de ejecución como artefacto (`ui-test-results`), incluso ante fallos (`if: always()`).
+- **`generate-report` (Merge & Publish Test Report):**
+  - Se ejecuta tras finalizar los jobs de pruebas siempre que al menos una suite haya corrido (`needs.test-api` o `needs.test-ui`).
+  - Descarga los artefactos de API y UI en carpetas independientes (`reports/mocha/api` y `reports/mocha/ui`), evitando sobreescritura.
+  - Ejecuta el script multiplataforma [`scripts/generate-report.js`](./scripts/generate-report.js), que valida la presencia de resultados, los consolida con `mochawesome-merge` y genera el reporte interactivo con gráficos (`marge`).
+  - Publica el reporte HTML consolidado como artefacto descargable (`mochawesome-html-report`) con 14 días de retención.
+
+### 4. Dónde encontrar los Reportes y Evidencias de Ejecución
+
+Al finalizar cualquier ejecución del pipeline en GitHub Actions, en la sección **Artifacts** (al pie de la página del run) se encuentran disponibles:
+- **`mochawesome-html-report`:** Archivo comprimido con el reporte HTML interactivo completo, gráficos de torta, tiempos y detalles de cada spec.
+- **`ui-failure-screenshots`:** Capturas de pantalla tomadas en el momento exacto de un fallo en la UI.
+- **`ui-failure-videos`:** Grabación en video del navegador durante los tests de UI fallidos.
+- **`api-test-results` / `ui-test-results`:** Archivos JSON en bruto de Mochawesome para trazabilidad.
+
+### 5. Interpretación de Estados de Jobs
+
+| Estado | Icono | Significado |
+|---|---|---|
+| **Success** | 🟢 Verde | Todos los tests o validaciones del job se completaron exitosamente. |
+| **Failure** | 🔴 Rojo | Uno o más tests fallaron. El reporte y las evidencias (screenshots/videos) se preservan y suben automáticamente. |
+| **Skipped** | ⚪ Gris | El job fue omitido intencionalmente (por ejemplo, si en una ejecución manual se seleccionó correr solo `api`, el job de `ui` se muestra como omitido sin afectar el reporte final). |
+
+---
 
 ---
 
