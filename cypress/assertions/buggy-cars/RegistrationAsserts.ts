@@ -4,7 +4,9 @@ export class RegistrationAsserts {
   /**
    * Asserts registration succeeded with confirmation banner
    */
-  public assertRegistrationSuccess(expectedText = 'Registration is successful'): this {
+  public assertRegistrationSuccess(
+    expectedText = 'Registration is successful',
+  ): this {
     cy.get(this.alertResult)
       .should('be.visible')
       .and('have.class', 'alert-success')

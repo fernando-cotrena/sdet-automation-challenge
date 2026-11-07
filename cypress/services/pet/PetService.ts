@@ -4,21 +4,25 @@ export class PetService {
   private readonly baseUrl: string;
 
   constructor() {
-    this.baseUrl = Cypress.env('apiBaseUrl') || 'https://petstore.swagger.io/v2';
+    this.baseUrl =
+      Cypress.env('apiBaseUrl') || 'https://petstore.swagger.io/v2';
   }
 
   /**
    * Creates a new pet (POST /pet)
    */
-  public createPet(payload: Pet | Record<string, unknown>, failOnStatusCode = true) {
+  public createPet(
+    payload: Pet | Record<string, unknown>,
+    failOnStatusCode = true,
+  ) {
     return cy.request({
       method: 'POST',
       url: `${this.baseUrl}/pet`,
       body: payload,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      failOnStatusCode
+      failOnStatusCode,
     });
   }
 
@@ -29,22 +33,25 @@ export class PetService {
     return cy.request({
       method: 'GET',
       url: `${this.baseUrl}/pet/${id}`,
-      failOnStatusCode
+      failOnStatusCode,
     });
   }
 
   /**
    * Updates an existing pet (PUT /pet)
    */
-  public updatePet(payload: Pet | Record<string, unknown>, failOnStatusCode = true) {
+  public updatePet(
+    payload: Pet | Record<string, unknown>,
+    failOnStatusCode = true,
+  ) {
     return cy.request({
       method: 'PUT',
       url: `${this.baseUrl}/pet`,
       body: payload,
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      failOnStatusCode
+      failOnStatusCode,
     });
   }
 
@@ -56,9 +63,9 @@ export class PetService {
       method: 'DELETE',
       url: `${this.baseUrl}/pet/${id}`,
       headers: {
-        api_key: 'special-key'
+        api_key: 'special-key',
       },
-      failOnStatusCode
+      failOnStatusCode,
     });
   }
 }

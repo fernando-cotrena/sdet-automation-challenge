@@ -2,9 +2,11 @@ export abstract class BasePage {
   // Common Navbar Locators
   protected readonly brandLogo = 'a.navbar-brand';
   protected readonly loginInput = 'input[name="login"]';
-  protected readonly passwordInput = 'nav.navbar my-login input[name="password"]';
+  protected readonly passwordInput =
+    'nav.navbar my-login input[name="password"]';
   protected readonly loginButton = 'button.btn-success';
-  protected readonly registerLink = 'a.btn-success-outline[href="/register"], a[href="/register"]';
+  protected readonly registerLink =
+    'a.btn-success-outline[href="/register"], a[href="/register"]';
   protected readonly userGreeting = 'span.nav-link';
   protected readonly logoutLink = 'a.nav-link';
   protected readonly loginErrorMessage = 'span.label-warning';

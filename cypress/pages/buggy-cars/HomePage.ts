@@ -3,8 +3,10 @@ import { RegistrationPage } from './RegistrationPage';
 import { ModelPage } from './ModelPage';
 
 export class HomePage extends BasePage {
-  private readonly popularModelLink = '.col-md-4:nth-child(2) a, a[href*="/model/"]';
-  private readonly overallRatingLink = '.col-md-4:nth-child(3) a, a[href*="/overall"]';
+  private readonly popularModelLink =
+    '.col-md-4:nth-child(2) a, a[href*="/model/"]';
+  private readonly overallRatingLink =
+    '.col-md-4:nth-child(3) a, a[href*="/overall"]';
 
   public visit(): this {
     super.visit('/');

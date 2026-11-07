@@ -20,21 +20,21 @@ export class PetFactory {
       id,
       category: {
         id: faker.number.int({ min: 1, max: 100 }),
-        name: faker.animal.type()
+        name: faker.animal.type(),
       },
       name: `${faker.person.firstName()}_${faker.animal.petName()}`,
       photoUrls: [
         faker.image.url({ width: 640, height: 480 }),
-        faker.image.url({ width: 640, height: 480 })
+        faker.image.url({ width: 640, height: 480 }),
       ],
       tags: [
         {
           id: faker.number.int({ min: 1, max: 50 }),
-          name: faker.word.sample()
-        }
+          name: faker.word.sample(),
+        },
       ],
       status: (overrides.status ?? 'available') as PetStatus,
-      ...overrides
+      ...overrides,
     };
   }
 
@@ -47,7 +47,7 @@ export class PetFactory {
       category: 'invalid-category-should-be-object',
       name: 123456789,
       photoUrls: 'not-an-array',
-      status: 9999
+      status: 9999,
     };
   }
 }

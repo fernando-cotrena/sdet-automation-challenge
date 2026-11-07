@@ -2,12 +2,12 @@ import { z } from 'zod';
 
 export const PetCategorySchema = z.object({
   id: z.number().optional(),
-  name: z.string().optional()
+  name: z.string().optional(),
 });
 
 export const PetTagSchema = z.object({
   id: z.number().optional(),
-  name: z.string().optional()
+  name: z.string().optional(),
 });
 
 export const PetStatusSchema = z.enum(['available', 'pending', 'sold']);
@@ -18,13 +18,13 @@ export const PetSchema = z.object({
   name: z.string().min(1),
   photoUrls: z.array(z.string()),
   tags: z.array(PetTagSchema).optional(),
-  status: PetStatusSchema.optional()
+  status: PetStatusSchema.optional(),
 });
 
 export const ApiResponseSchema = z.object({
   code: z.number().optional(),
   type: z.string().optional(),
-  message: z.string().optional()
+  message: z.string().optional(),
 });
 
 export type PetCategory = z.infer<typeof PetCategorySchema>;
