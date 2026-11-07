@@ -47,14 +47,16 @@ Cypress.Commands.add('loginWithSession', (user: UserData) => {
       // Then login
       cy.visit('/');
       cy.loginByUi(user.username, user.password);
-      cy.contains('span.nav-link', `Hi, ${user.firstName}`).should('be.visible');
+      cy.contains('span.nav-link', `Hi, ${user.firstName}`).should(
+        'be.visible',
+      );
     },
     {
       validate() {
         cy.visit('/');
         cy.contains('a.nav-link', 'Logout').should('be.visible');
-      }
-    }
+      },
+    },
   );
 });
 

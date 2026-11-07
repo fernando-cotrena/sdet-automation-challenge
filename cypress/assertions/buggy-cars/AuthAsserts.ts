@@ -30,12 +30,16 @@ export class AuthAsserts {
    * Asserts error notification when login credentials fail
    */
   public assertLoginError(message = 'Invalid username/password'): this {
-    cy.get(this.loginErrorMessage).should('be.visible').and('contain.text', message);
+    cy.get(this.loginErrorMessage)
+      .should('be.visible')
+      .and('contain.text', message);
     return this;
   }
 
   public assertLoginRequired(): this {
-    cy.get(this.loginInput).invoke('prop', 'validationMessage').should('not.be.empty');
+    cy.get(this.loginInput)
+      .invoke('prop', 'validationMessage')
+      .should('not.be.empty');
     return this;
   }
 }

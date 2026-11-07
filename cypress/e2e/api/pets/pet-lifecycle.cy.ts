@@ -1,6 +1,10 @@
 import { PetService } from '../../../services/pet/PetService';
 import { PetFactory } from '../../../factories/PetFactory';
-import { PetSchema, ApiResponseSchema, Pet } from '../../../schemas/pet/PetSchema';
+import {
+  PetSchema,
+  ApiResponseSchema,
+  Pet,
+} from '../../../schemas/pet/PetSchema';
 
 describe('API - Pet Lifecycle (/pet)', () => {
   const petService = new PetService();
@@ -64,7 +68,7 @@ describe('API - Pet Lifecycle (/pet)', () => {
       const updatedPayload: Pet = {
         ...initialPet,
         status: 'sold',
-        name: `${initialPet.name}_Sold`
+        name: `${initialPet.name}_Sold`,
       };
 
       // Action: Update pet
@@ -100,9 +104,11 @@ describe('API - Pet Lifecycle (/pet)', () => {
         expect(apiResponse.message).to.eq(String(petToDelete.id));
 
         // Verification: Subsequent GET must return 404 Not Found
-        petService.getPetById(petToDelete.id, false).then((notFoundResponse) => {
-          expect(notFoundResponse.status).to.eq(404);
-        });
+        petService
+          .getPetById(petToDelete.id, false)
+          .then((notFoundResponse) => {
+            expect(notFoundResponse.status).to.eq(404);
+          });
       });
     });
   });

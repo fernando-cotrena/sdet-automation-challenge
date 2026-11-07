@@ -5,7 +5,9 @@ export class ModelPage extends BasePage {
   private readonly commentTextarea = '#comment';
   private readonly voteButton = 'button.btn-success';
 
-  public visit(modelPath = '/model/c04b8801-460d-4050-a929-e3ab47a9501d'): this {
+  public visit(
+    modelPath = '/model/c04b8801-460d-4050-a929-e3ab47a9501d',
+  ): this {
     super.visit(modelPath);
     return this;
   }

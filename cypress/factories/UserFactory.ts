@@ -15,9 +15,13 @@ export class UserFactory {
    */
   public static buildValidUser(overrides: Partial<UserData> = {}): UserData {
     const timestamp = Date.now();
-    const randomSuffix = faker.string.alphanumeric({ length: 5, casing: 'lower' });
+    const randomSuffix = faker.string.alphanumeric({
+      length: 5,
+      casing: 'lower',
+    });
     const username = `test_${timestamp}_${randomSuffix}`;
-    const firstName = faker.person.firstName().replace(/[^a-zA-Z]/g, '') || 'John';
+    const firstName =
+      faker.person.firstName().replace(/[^a-zA-Z]/g, '') || 'John';
     const lastName = faker.person.lastName().replace(/[^a-zA-Z]/g, '') || 'Doe';
     // Buggy Cars password rules: at least 1 uppercase, 1 lowercase, 1 number, 1 special character
     const password = overrides.password ?? 'P@ssword123!';
@@ -26,7 +30,7 @@ export class UserFactory {
       username: overrides.username ?? username,
       firstName: overrides.firstName ?? firstName,
       lastName: overrides.lastName ?? lastName,
-      password
+      password,
     };
   }
 
@@ -38,7 +42,7 @@ export class UserFactory {
       username: `nonexistent_${Date.now()}`,
       firstName: 'Invalid',
       lastName: 'User',
-      password: 'WrongPassword123!'
+      password: 'WrongPassword123!',
     };
   }
 }

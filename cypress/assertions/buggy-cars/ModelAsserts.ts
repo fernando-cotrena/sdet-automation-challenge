@@ -2,7 +2,8 @@ import { ModelPage } from '../../pages/buggy-cars/ModelPage';
 
 export class ModelAsserts {
   private readonly voteSuccessAlert = 'p.card-text';
-  private readonly commentsTable = 'table.table tbody';
+  private readonly commentsTable =
+    'table.table tbody tr:first-child td:nth-child(3)';
   private readonly modelPage = new ModelPage();
 
   /**
@@ -25,7 +26,10 @@ export class ModelAsserts {
    * Asserts that the comment and author are recorded in the comments table
    */
   public assertCommentListed(commentText: string): this {
-    cy.get(this.commentsTable).first().should('be.visible').and('contain.text', commentText);
+    cy.get(this.commentsTable)
+      .first()
+      .should('be.visible')
+      .and('contain.text', commentText);
     return this;
   }
 }
